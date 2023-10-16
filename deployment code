@@ -1,0 +1,42 @@
+
+import streamlit as st
+from keras.models import load_model
+from keras.preprocessing import image
+from keras.applications.resnet50 import preprocess_input
+import numpy as np
+from PIL import Image
+import io
+
+# Load your trained model
+model = load_model('C:\\Users\\16614\\Downloads\\ML_model_file\\my_model.h5')
+
+# Function to load and prepare the image in proper shape
+def load_image(img):
+    img = Image.open(io.BytesIO(img)).resize((224, 224))
+    img = image.img_to_array(img)
+    img = np.expand_dims(img, axis=0)
+    img = preprocess_input(img)
+    return img
+
+def predict_image(img):
+    img = load_image(img)
+    classes = np.argmax(model.predict(img), axis=-1)
+    return classes
+
+st.title("Lung Tissue Classification Example")
+
+uploaded_file = st.file_uploader("Choose an image...", type="jpg")
+
+if uploaded_file is not None:
+    img = Image.open(uploaded_file)
+    st.image(img, caption='Uploaded Image.', use_column_width=True)
+    st.write("")
+
+    st.write("Classifying...")
+    label = predict_image(uploaded_file.getvalue())
+    if label[0] == 0:
+        st.write("The model predicts that this is Lung adenocarcinoma.")
+    elif label[0] == 1:
+        st.write("The model predicts that this is Lung benign tissue.")
+    elif label[0] == 2:
+        st.write("The model predicts that this is Lung squamous cell carcinoma.")
