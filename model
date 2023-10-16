@@ -1,0 +1,54 @@
+#Using ResNet50 because it's a premade model made for image classification
+from keras.applications import ResNet50
+from keras.models import Sequential
+from keras.layers import Dense, GlobalAveragePooling2D
+from keras.preprocessing.image import ImageDataGenerator
+from keras.applications.resnet50 import preprocess_input
+
+#Define the number of classes
+num_classes = 3
+
+#Specify the training and validation directories
+train_dir = 'C:\\Users\\16614\\Downloads\\organized lung histo data\\train'
+validation_dir = 'C:\\Users\\16614\\Downloads\\organized lung histo data\\validation'
+
+#Create a data generator for the training data
+data_generator = ImageDataGenerator(preprocessing_function=preprocess_input)
+
+#load the data from the training and validation directories
+train_generator = data_generator.flow_from_directory(
+    train_dir,
+target_size = (image_size, image_size),
+batch_size = 24, class_mode = 'categorical')
+
+validation_generator = data_generator.flow_from_directory(
+    validation_dir,
+target_size = (image_size, image_size),
+batch_size = 24, class_mode = 'categorical')
+
+#Create the model
+model = Sequential ()
+
+#Add the ResNet50 base model
+model.add(ResNet50(include_top = False, pooling = 'avg', weights = 'imagenet'))
+
+#Add a new output layer to connect with our problem
+model.add(Dense(num_classes, activation = 'softmax'))
+
+#Make all the layers in the base model non-trainable
+for layer in model.layers[0].layers:
+    layer.trainable = False #if trainable == False, then nothing happens
+    
+#Compile the model
+model.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy'])
+
+#Train the model
+model.fit(
+    train_generator,
+    validation_data = validation_generator,
+    epochs = 10)
+
+#Save the trained model
+model.save('C:\\Users\\16614\\Downloads\\ML_model_file\\my_model.h5')
+
+#Data source: https://www.kaggle.com/datasets/andrewmvd/lung-and-colon-cancer-histopathological-images
